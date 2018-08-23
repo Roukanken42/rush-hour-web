@@ -1,0 +1,46 @@
+{% load puzzle_filters %}
+
+<div class="card-body">
+	<form method="post">
+		{% csrf_token %}
+
+		{% for error in form.non_field_errors %}
+			<div class="alert alert-danger"> {{ error }} </div>
+		{% endfor %}
+
+		{% for hidden in form.hidden_fields %}
+			{{ hidden }}
+		{% endfor %}
+
+
+		{% for field in form.visible_fields %}
+		<div class="mb-4">
+			<div class="input-group mb-2">
+				{# <div class="input-group-prepend"> #}
+					{# <span class="input-group-text"> {{ field.label }} </span> #}
+				{# </div> #}
+				<input 
+				{% if field.name|startswith:"password" %} 
+					type="password" 
+				{% else %} 
+					type="text"
+				{% endif%}
+				class="form-control" name="{{ field.html_name }}" placeholder="{{ field.label }}">
+			</div>
+
+			{% for error in field.errors %}
+				<div class="alert alert-danger"> {{ error }} </div>
+			{% endfor %}
+
+			{% if field.help_text %}
+				<div class="mb-2">
+					{{ field.help_text }}
+				</div>
+			{% endif %}
+
+		</div>
+		{% endfor %}
+
+		<button type="submit" class="btn btn-outline-success col">{{ submit_text }}</button>
+	</form>
+</div>

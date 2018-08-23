@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load tz %}
+{% load puzzle_filters %}
+
+{% block levelsactive %}active{% endblock %}
+
+{% block content %}
+{% localtime on %}
+
+<style type="text/css">
+.center {
+    text-align: center;
+}
+
+</style>
+
+<div class="card"> 
+    <div class="card-header border-0">
+        <h3>Level list</h3>
+    </div>
+
+    <table id="levels" class="table table-hover mb-0">
+    <thead>
+        <tr>
+            <th>Level name</th>
+            <th class="center">Min. moves</th>
+            <th class="center">Configurations</th>
+            <th class="center">Blocks</th>
+            <th class="center">Difficulty</th>
+            <th class="center">Points</th>
+            <th style="width: 20%"><div class="center">Cleared</div></th>
+        </tr>
+    </thead>
+    <tbody>
+    {% with levels|last as last %}    
+        {% for level in levels %}
+            <tr class="{% if level.clear %}table-success{% endif %}" data-href="{% url 'level' level.id %}">
+                <td>{{ level.name }}</td>
+                <td class="center">{{ level.moves }}</td>
+                <td class="center">{{ level.configurations }}</td>
+                <td class="center">{{ level.cars }}</td>
+                <td class="center">
+                    <div class="progress">
+                        {% widthratio level.points last.points 1000 as d %}
+                        {% with d|to_int|divide:10 as difficulty %}
+                            <div class="progress-bar{% if difficulty < 35 %} bg-success{% elif difficulty < 75 %} bg-warning{% else %} bg-danger{% endif %}" 
+                                role="progressbar" style="width: {{ difficulty }}%"></div>
+                        {% endwith %}
+                    </div>
+                </td>
+                <td class="center">{{ level.points|floatformat:2 }}</td>
+                <td style="width: 20%"><div class="float-right">{{ level.clear.date }}</div></td>
+            </tr>
+        {% endfor %}
+    {% endwith %}
+    </tbody>
+    </table>
+</div>
+
+<script>
+$(function(){
+    $('.table tr[data-href]').each(function(){
+        $(this).css('cursor','pointer').hover(
+            function(){ 
+                $(this).addClass('active'); 
+            },  
+            function(){ 
+                $(this).removeClass('active'); 
+            }).click( function(){ 
+                document.location = $(this).attr('data-href'); 
+            }
+        );
+    });
+});
+</script>
+{% endlocaltime %}
+{% endblock %}

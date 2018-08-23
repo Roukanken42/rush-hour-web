@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block leaderboardactive %}active{% endblock %}
+
+{% block content %}
+
+<style type="text/css">
+.winner {
+    background: rgba(232, 189, 0, 0.7)
+}
+
+.second {
+    background: rgba(168, 168, 168, 0.7)
+}
+
+.third {
+    background: rgba(206, 134, 45, 0.7)
+}
+
+.table td, .table th {
+    vertical-align: middle !important;
+}
+
+.center {
+    text-align: center;
+}
+
+</style>
+
+<div class="card"> 
+    <div class="card-header border-0">
+        <h3>Leaderboard</h3>
+    </div>
+
+    <table class="table table-hover mb-0">
+    <thead>
+        <tr>
+            <th style="width: 7%" class="center">Rank</th>
+            <th class="center">User</th>
+            <th class="center">Levels</th>
+            {# <th>Points</th> #}
+            <th class="center">Points</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for user in users %}
+        <tr class="{% if forloop.counter == 1 %}winner{% elif forloop.counter == 2%}second{% elif forloop.counter == 3 %}third{% endif %}">
+            <td class="center"><b>#{{ forloop.counter }}</b></td>
+            <td class="center">{{ user.username }}</td>
+            <td class="center">{{ user.levels }}</td>
+            <td class="center">
+                <div class="progress">
+                    <div class="progress-bar bg-success" 
+                        role="progressbar" style="width: {% widthratio user.points users.0.points 100 %}%">{{ user.points|floatformat:2 }}</div>
+                </div>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+    </table>
+</div>
+
+{% endblock %}
