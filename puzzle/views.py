@@ -26,8 +26,8 @@ def levels(request):
 
     users = User.objects.count()
 
-    for level in levels:
-        level.progress = 100 - level.clears / users * 95
+    # for level in levels:
+        # level.progress = 100 - level.clears / users * 95
 
 
     return render(
