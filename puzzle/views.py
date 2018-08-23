@@ -13,7 +13,7 @@ User = get_user_model()
 from .models import *
 
 def levels(request):    
-    levels = Level.objects.all().annotate(clears = Count("clear")).order_by("-clears", "moves", "configurations")
+    levels = Level.objects.all().annotate(clears = Count("clear")).order_by("points", "moves", "configurations")
 
     if request.user.is_authenticated:
         level_dict = {level.id: level for level in levels}
