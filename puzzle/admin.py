@@ -16,5 +16,8 @@ class LevelAdmin(admin.ModelAdmin):
     ordering = ["points", "moves", "configurations"]
     actions = [recalc_points]
 
+class ClearAdmin(admin.ModelAdmin):
+    list_display = ["level", "user", "date"]
+
 admin.site.register(Level, LevelAdmin)
-admin.site.register(Clear)
+admin.site.register(Clear, ClearAdmin)
