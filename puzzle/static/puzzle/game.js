@@ -120,7 +120,7 @@ $(document).ready(() => {
             if (!car.draged || !loggedIn) return
                 
             let delta = event.point.subtract(car.position).subtract(car.dragedBy)
-            let max = new Point(1)
+            let max = new Point(10)
 
             if (car.vertical) {
                 delta.x = 0
