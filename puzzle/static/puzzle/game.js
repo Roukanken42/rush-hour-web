@@ -2,9 +2,24 @@ paper.install(window)
 let canvas = document.getElementById("canvas")
 
 // console.log(levelData)
+let moves = 0;
 
 $(document).ready(() => {
+    reset()
+})
+
+let timer = null;
+
+function getproject(){
+    return paper.project;
+}
+
+function reset(){
     paper.setup(canvas)
+    project.clear();
+
+    if (timer != null)
+        clearInterval(timer);
 
     let GRID = new Size(levelData.width, levelData.height)
     let BORDER = 5
@@ -24,12 +39,15 @@ $(document).ready(() => {
     let GAP_SIZE = new Size(GAP);
 
     let logData = [];
+    let won = false;
+    let uploaded = false;
+    moves = 0;
 
     drawGrid()
     
     let borderPath = drawBorder()
 
-    let cars = levelData.cars.map(car => drawCar(car.id, car.x, car.y, car.w, car.h, car.color))
+    let cars = levelData.cars.map(car => drawCar(car.id, car.x, car.y, car.w, car.h, car.color))    
 
     
     let goalStart = new Point(width - BORDER * 0.5, BORDER + (levelData.goal == 0 ? 0 : 1)).add(SQUARE_HEIGHT.multiply(levelData.goal))
@@ -41,7 +59,7 @@ $(document).ready(() => {
 
     let start = Date.now();
 
-    if(!loggedIn) {
+    if(!loggedIn || won) {
         goInactive();
     }
 
@@ -103,13 +121,13 @@ $(document).ready(() => {
         car.color = color;
 
         car.onMouseDown = event => {
-            if(!loggedIn) return 
+            if(!loggedIn || won) return 
 
             car.fillColor = "rgba(0, 0, 0, 0.7)";
             car.dragedBy = event.point.subtract(car.position)
             car.draged = true;
 
-            logData.push({type:"down", car: car.gameId, time: Date.now() - start})
+            car.downTime = Date.now() - start
 
             car.minDrag = undefined
             car.maxDrag = undefined
@@ -117,7 +135,7 @@ $(document).ready(() => {
         }
 
         car.onMouseDrag = event => {
-            if (!car.draged || !loggedIn) return
+            if (!car.draged || !loggedIn || won) return
                 
             let delta = event.point.subtract(car.position).subtract(car.dragedBy)
             let max = new Point(10)
@@ -152,7 +170,7 @@ $(document).ready(() => {
                 }
 
                 if (car.intersects(goal)){
-                    loggedIn = false;
+                    won = true;
                 }
 
                 if (intersectsCar || car.intersects(borderPath)) {
@@ -184,10 +202,13 @@ $(document).ready(() => {
                 car.maxDrag = pos;
             }
 
-            console.log("Dragging:", car.minDrag, "-", car.maxDrag)
+            // console.log("Dragging:", car.minDrag, "-", car.maxDrag)
 
-            if (!loggedIn){
-                logData.push({type:"up", car: car.gameId, time: Date.now() - start, pos: pos, min: car.minDrag, max: car.maxDrag})
+            if (!loggedIn || won){
+                if (car.minDrag != car.maxDrag)
+                    moves += 1;
+
+                logData.push({car: car.gameId, start: car.downTime, end: Date.now() - start, pos: pos, min: car.minDrag, max: car.maxDrag})
                 goInactive();
                 win();
                 // console.log("WIN")
@@ -195,7 +216,7 @@ $(document).ready(() => {
         }
 
         car.onMouseUp = event => {
-            if(!loggedIn) return 
+            if(!loggedIn || won) return 
             
             if (car.draged){
                 let points = [];
@@ -227,8 +248,19 @@ $(document).ready(() => {
                 }
 
                 car.bounds.topLeft = minPoint;
-            
-                logData.push({type:"up", car: car.gameId, time: Date.now() - start, pos: minPoint.pos, min: car.minDrag, max: car.maxDrag})
+                
+                if (car.minDrag != car.maxDrag)
+                    moves += 1;
+                
+                if (car.minDrag == undefined)
+                    car.minDrag = minPoint.pos 
+
+                if (car.maxDrag == undefined)
+                    car.maxDrag = minPoint.pos 
+
+
+                logData.push({car: car.gameId, start: car.downTime, end: Date.now() - start, pos: minPoint.pos, min: car.minDrag, max: car.maxDrag})
+                updateUI();
             }
 
             car.fillColor = car.color;
@@ -250,10 +282,45 @@ $(document).ready(() => {
         text.justification = "center"
         text.fontSize = 20
 
-        upload()
+        if (timer != null)
+            clearInterval(timer);
+        
+        updateUI();
+
+        upload(true)
     }
 
-    function upload() {
-        $.post(window.location.href, {"data": JSON.stringify(logData), "csrfmiddlewaretoken": csfr})
+    function upload(sync) {
+        console.log(logData)
+        
+        $.ajax({
+            type:"POST",
+            url: window.location.href, 
+            async: sync,
+            data: {"data": JSON.stringify(logData), "time": Date.now() - start, "won": won, "csrfmiddlewaretoken": csfr}
+        })
+
+        uploaded = true;
     }
-})
+
+    timer = setInterval(updateUI, 1000)
+    updateUI();
+
+    function updateUI(){
+        $(".level-moves").html(moves)
+
+        let time = (Date.now() - start) / 1000;
+        $(".level-time.minutes").html(Math.floor(time / 60))
+
+        let seconds = "" + Math.floor(time % 60);
+        if (seconds.length < 2) seconds = "0" + seconds;
+
+        $(".level-time.seconds").html(seconds)
+    }
+
+    window.onbeforeunload = function(){
+        if (uploaded == false) {
+            upload(false);
+        }
+    };
+}

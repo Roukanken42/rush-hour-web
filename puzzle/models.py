@@ -4,6 +4,7 @@ from django.conf import settings
 # Create your models here.
 
 import json
+import datetime
 
 class Level(models.Model):
     name = models.CharField(max_length = 255)
@@ -51,8 +52,7 @@ class Level(models.Model):
     @property
     def clears(self):
         if not hasattr(self, "_clears"):
-            self._clears = Clear.objects.filter(level = self).count()
-
+            self._clears = Clear.objects.filter(level = self).values("user").distinct().count()
         return self._clears
     
     @clears.setter
@@ -73,6 +73,10 @@ class Clear(models.Model):
 
     date = models.DateTimeField(auto_now_add=True)
     data = models.TextField()
+
+    successful = models.BooleanField()
+    moves = models.IntegerField()
+    time = models.DurationField(default = datetime.timedelta())
 
     def __str__(self):
         return f"{self.level} cleared by {self.user}"

@@ -7,24 +7,107 @@
 
 <script language="javascript" src="{% static "puzzle/paper-full.js" %}" type="text/javascript"></script>
 
-<div class="card">
-	<div class="card-header">
-		<div class="row">
-			<h3 class="col"> {{ level.name }} </h3>
-			<div class="col">
-				<a class="btn btn-outline-danger float-right" href="{% url 'level_list' %}">&laquo; Back</a>
-			</div>
-		</div>
-	</div>
-	<div class="card-body">
-		{% if not user.is_authenticated %}
-			<div class="alert alert-danger"> You must be logged in to play!</div>
-		{% endif %}
+<style type="text/css">
+.borderless th{ 
+    border-top: none !important; 
+}
 
-		<div class="row justify-content-center">
-			<canvas id="canvas" width="{{ level.width }}px" height="{{ level.height }}px" style="margin: auto"></canvas>
-		</div>
-	</div>
+.center {
+    text-align: center;
+}
+</style>
+
+<div class="card">
+    <div class="card-header">
+        <div class="row">
+            <h3 class="col"> {{ level.name }} </h3>
+            <div class="col">
+                <a class="btn btn-outline-danger float-right mx-2" href="{% url 'level_list' %}"><i class="fas fa-backward"></i> Back</a>
+                <a class="btn btn-outline-secondary float-right mx-2" onclick="reset()"><i class="fas fa-undo-alt"></i> Restart</a>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if not user.is_authenticated %}
+            <div class="alert alert-danger"> You must be logged in to play!</div>
+        {% endif %}
+
+
+        <div class="row">
+            <div class="col-2"></div>
+            <div class="col-2" style="font-size: 30px">
+                <br><br>
+                <i class="fas fa-arrows-alt" title="Moves"></i> - <span class="level-moves"></span> <br>
+                <i class="far fa-clock" title="Time"></i> - <span class="level-time minutes"></span>:<span class="level-time seconds"></span> <br>
+            </div>
+            <div class="col-4"> 
+                <div class="row justify-content-center">
+                    <canvas id="canvas" width="{{ level.width }}px" height="{{ level.height }}px" style="margin: auto"></canvas>
+                </div>
+            </div>
+            <div class="col-4"></div>
+        </div>        
+    </div>
+</div>
+
+<br>
+<h3>Leaderboards</h3>
+<div class="card"> 
+    <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs">
+            <li class="nav-item">
+                <a class="nav-link active" href="#times" data-toggle="tab">Best times</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#moves" data-toggle="tab">Least moves</a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="tab-content">
+        <div class="tab-pane active" id="times">
+            <table class="table table-hover mb-0 borderless">
+            <thead>
+                <tr>
+                    <th style="width: 7%" class="center">Rank</th>
+                    <th style="width: 40%" class="center">User</th>
+                    <th style="width: 53%" class="center">Time</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for user in times %}
+                <tr class="{% if forloop.counter == 1 %}winner{% elif forloop.counter == 2%}second{% elif forloop.counter == 3 %}third{% endif %}">
+                    <td class="center"><b>#{{ forloop.counter }}</b></td>
+                    <td class="center">{{ user.username }}</td>
+                    <td class="center">{{ user.time }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+            </table>
+        </div>
+
+        <div class="tab-pane" id="moves" style="border-top: none; ">
+            <table class="table table-hover mb-0 borderless" >
+            <thead>
+                <tr>
+                    <th style="width: 7%" class="center">Rank</th>
+                    <th style="width: 40%" class="center">User</th>
+                    <th style="width: 53%" class="center">Moves</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for user in moves %}
+                <tr class="{% if forloop.counter == 1 %}winner{% elif forloop.counter == 2%}second{% elif forloop.counter == 3 %}third{% endif %}">
+                    <td class="center"><b>#{{ forloop.counter }}</b></td>
+                    <td class="center">{{ user.username }}</td>
+                    <td class="center">{{ user.moves }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+            </table>
+        </div>
+    </div>
+
 </div>
 
 

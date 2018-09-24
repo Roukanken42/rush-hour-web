@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 
 from django.contrib.auth import get_user_model
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, Min, Max, Q
 
 import collections
 
@@ -18,7 +18,7 @@ def levels(request):
     if request.user.is_authenticated:
         level_dict = {level.id: level for level in levels}
 
-        clears = Clear.objects.all().filter(user = request.user).order_by("-date")
+        clears = Clear.objects.all().filter(user = request.user, successful=True).order_by("-date")
 
         for clear in clears:
             if clear.level.id in level_dict:
@@ -38,27 +38,36 @@ def level(request, level_id):
     except Level.DoesNotExist:
         raise Http404("Level does not exist")
 
+    
+    times = User.objects.annotate(time = Min("clear__time", filter=Q(clear__level = level, clear__successful = True))).exclude(time__isnull = True)
+    moves = User.objects.annotate(moves = Min("clear__moves", filter=Q(clear__level = level, clear__successful = True))).exclude(moves__isnull = True)
+
     if request.method == "GET":
-        return render(request, "puzzle/level.html", {"level": level})
+        return render(request, "puzzle/level.html", {"level": level, "times": times, "moves": moves})
 
     if request.method == "POST":
-        data = request.POST.get("data", "")
-
         if not request.user.is_authenticated:
             raise Http403("You must be logged in !")
+        
+        else:
+            data = request.POST.get("data", "")
+            dataJson = json.loads(data)
+            
+            moves = sum(1 if move["min"] != move["max"] else 0 for move in dataJson)
 
-        try:
-            Clear.objects.get(level = level, user = request.user)
-            raise Http403("Already cleared")
+            time = int(request.POST.get("time", "-1"))
+            time = datetime.timedelta(milliseconds=time)
 
-        except Clear.DoesNotExist:
-            clear = Clear(level = level, user = request.user, data = data)
+            won = True if request.POST.get("won", "") == "true" else False
+
+            clear = Clear(level = level, user = request.user, data = data, moves = moves, time = time, successful = won)
             clear.save()
 
             level.recalcPoints()
             level.save() 
 
             return HttpResponse()
+
 
 
 def leaderboard(request):
