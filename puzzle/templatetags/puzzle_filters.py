@@ -1,7 +1,7 @@
 from django.utils.safestring import mark_safe
 from django.template import Library
 
-import json
+import json, math
 
 register = Library()
 
@@ -22,3 +22,15 @@ def to_int(value):
 @register.filter()
 def divide(value, x):
     return value / x
+
+@register.filter()
+def duration(td, decimals = 0):
+    decimals = int(decimals)
+
+    total = round(td.total_seconds() * (10 ** decimals)) / (10 ** decimals)
+
+    mins = int(total // 60) 
+    sec = int(total % 60)
+    rest = int(total % 1 * (10 ** decimals))
+
+    return f"{mins}:{sec:02}" + ("" if decimals <= 0 else f".{rest:0{decimals}}")

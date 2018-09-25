@@ -79,7 +79,7 @@
                 <tr class="{% if forloop.counter == 1 %}winner{% elif forloop.counter == 2%}second{% elif forloop.counter == 3 %}third{% endif %}">
                     <td class="center"><b>#{{ forloop.counter }}</b></td>
                     <td class="center">{{ user.username }}</td>
-                    <td class="center">{{ user.time }}</td>
+                    <td class="center">{{ user.time|duration:1 }}</td>
                 </tr>
             {% endfor %}
             </tbody>
