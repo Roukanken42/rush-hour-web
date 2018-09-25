@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 
 from django.contrib.auth import get_user_model
-from django.db.models import Count, Sum, Min, Max, Q
+from django.db.models import *
 
 import collections
 
@@ -71,7 +71,29 @@ def level(request, level_id):
 
 
 def leaderboard(request):
-    users = User.objects.annotate(points = Sum("clear__level__points"), levels = Count("clear__level")).exclude(levels = 0).order_by("-points", "-levels")
+    # users = User.objects.annotate(points = Sum("clear__level__points"), levels = Count("clear__level")).exclude(levels = 0).order_by("-points", "-levels")
+    data = ( 
+        Clear.objects.all()
+        .filter(successful = True, user = OuterRef(OuterRef("pk")))
+        .values("level")
+        .distinct()
+    )
+
+    levels = (
+        Level.objects.all()
+        .filter(pk__in = Subquery(data))
+        .annotate(count = Count("*"), sum = Sum("points"))
+        .values("count", "sum")
+    )
+
+
+    users = ( User.objects.all()
+        .annotate(user_pk = F("pk"))
+        .annotate(points = Subquery(levels.values("sum")), levels = Subquery(levels.values("count")))
+        .exclude(levels = 0)
+        .order_by("-points", "-levels")
+        .values("username", "points", "levels")
+    )
 
     return render(request, "puzzle/leaderboard.html", {"users": users})
 
