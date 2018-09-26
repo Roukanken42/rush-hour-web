@@ -98,12 +98,13 @@ def leaderboard(request):
                 GROUP BY user_id, level_id
             )   
             GROUP BY user_id
+            ORDER BY points DESC
             """
         )
 
         users = namedTupleFetchall(cursor)
         # print(*users, sep="\n")
-        
+
         return render(request, "puzzle/leaderboard.html", {"users": users})
 
     return render(request, "puzzle/leaderboard.html", {"users": []})
