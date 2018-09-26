@@ -39,8 +39,17 @@ def level(request, level_id):
         raise Http404("Level does not exist")
 
     
-    times = User.objects.annotate(time = Min("clear__time", filter=Q(clear__level = level, clear__successful = True))).exclude(time__isnull = True)
-    moves = User.objects.annotate(moves = Min("clear__moves", filter=Q(clear__level = level, clear__successful = True))).exclude(moves__isnull = True)
+    times = (
+        User.objects.annotate(time = Min("clear__time", filter=Q(clear__level = level, clear__successful = True)))
+        .exclude(time__isnull = True)
+        .order_by("time")
+    )
+
+    moves = (
+        User.objects.annotate(moves = Min("clear__moves", filter=Q(clear__level = level, clear__successful = True)))
+        .exclude(moves__isnull = True)
+        .order_by("moves")
+    )
 
     if request.method == "GET":
         return render(request, "puzzle/level.html", {"level": level, "times": times, "moves": moves})
