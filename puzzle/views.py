@@ -3,6 +3,7 @@ from django.http import HttpResponse
 
 from django.contrib.auth import get_user_model
 from django.db.models import *
+from django.db import connection
 
 import collections
 
@@ -78,33 +79,34 @@ def level(request, level_id):
             return HttpResponse()
 
 
+def namedTupleFetchall(cursor):
+    desc = cursor.description
+    nt_result = collections.namedtuple('Result', [col[0] for col in desc])
+    return [nt_result(*row) for row in cursor.fetchall()]
 
 def leaderboard(request):
-    # users = User.objects.annotate(points = Sum("clear__level__points"), levels = Count("clear__level")).exclude(levels = 0).order_by("-points", "-levels")
-    data = ( 
-        Clear.objects.all()
-        .filter(successful = True, user = OuterRef(OuterRef("pk")))
-        .values("level")
-        .distinct()
-    )
+    with connection.cursor() as cursor: 
+        cursor.execute(
+            """
+            SELECT username, sum(points) as points, count(*) as levels FROM 
+            (
+                SELECT clear.user_id, user.username, clear.level_id, max(level.points) as points
+                FROM puzzle_clear clear 
+                INNER JOIN puzzle_level level ON level.id = level_id
+                INNER JOIN auth_user user ON user.id = user_id
+                WHERE successful = 1 
+                GROUP BY user_id, level_id
+            )   
+            GROUP BY user_id
+            """
+        )
 
-    levels = (
-        Level.objects.all()
-        .filter(pk__in = Subquery(data))
-        .annotate(count = Count("*"), sum = Sum("points"))
-        .values("count", "sum")
-    )
+        users = namedTupleFetchall(cursor)
+        # print(*users, sep="\n")
+        
+        return render(request, "puzzle/leaderboard.html", {"users": users})
 
-
-    users = ( User.objects.all()
-        .annotate(user_pk = F("pk"))
-        .annotate(points = Subquery(levels.values("sum")), levels = Subquery(levels.values("count")))
-        .exclude(levels = 0)
-        .order_by("-points", "-levels")
-        .values("username", "points", "levels")
-    )
-
-    return render(request, "puzzle/leaderboard.html", {"users": users})
+    return render(request, "puzzle/leaderboard.html", {"users": []})
 
 def index(request):
     return render(request, "puzzle/index.html", {})
