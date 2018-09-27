@@ -32,21 +32,17 @@
             <div class="alert alert-danger"> You must be logged in to play!</div>
         {% endif %}
 
-
-        <div class="row">
-            <div class="col-2"></div>
-            <div class="col-2" style="font-size: 30px">
-                <br><br>
+        <div class="row justify-content-center">
+            <canvas id="canvas" width="{{ level.width }}px" height="{{ level.height }}px" style="margin: auto"></canvas>
+        </div>        
+        <div class="row" style="font-size: 30px">
+            <div class="col-md-6 justify-content-center">
                 <i class="fas fa-arrows-alt" title="Moves"></i> - <span class="level-moves"></span> <br>
+            </div>
+            <div class="col-md-6 justify-content-center">
                 <i class="far fa-clock" title="Time"></i> - <span class="level-time minutes"></span>:<span class="level-time seconds"></span> <br>
             </div>
-            <div class="col-4"> 
-                <div class="row justify-content-center">
-                    <canvas id="canvas" width="{{ level.width }}px" height="{{ level.height }}px" style="margin: auto"></canvas>
-                </div>
-            </div>
-            <div class="col-4"></div>
-        </div>        
+        </div>
     </div>
 </div>
 
