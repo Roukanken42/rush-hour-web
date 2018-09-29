@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import *
 from django.db import connection
 
-import collections
+import collections, itertools
 
 User = get_user_model()
 
@@ -14,7 +14,11 @@ User = get_user_model()
 from .models import *
 
 def levels(request):    
-    levels = Level.objects.all().annotate(clears = Count("clear")).order_by("points", "moves", "configurations")
+    levels = (
+        Level.objects.all()
+        .annotate(clears = Count("clear"))
+        .order_by("points", "moves", "configurations")
+    )
 
     if request.user.is_authenticated:
         level_dict = {level.id: level for level in levels}
@@ -40,20 +44,33 @@ def level(request, level_id):
         raise Http404("Level does not exist")
 
     
-    times = (
-        User.objects.annotate(time = Min("clear__time", filter=Q(clear__level = level, clear__successful = True)))
-        .exclude(time__isnull = True)
-        .order_by("time")
-    )
-
-    moves = (
-        User.objects.annotate(moves = Min("clear__moves", filter=Q(clear__level = level, clear__successful = True)))
-        .exclude(moves__isnull = True)
-        .order_by("moves")
-    )
 
     if request.method == "GET":
-        return render(request, "puzzle/level.html", {"level": level, "times": times, "moves": moves})
+        times = (
+            User.objects.annotate(time = Min("clear__time", filter=Q(clear__level = level, clear__successful = True)))
+            .exclude(time__isnull = True)
+            .order_by("time")
+        )
+
+        moves = (
+            User.objects.annotate(moves = Min("clear__moves", filter=Q(clear__level = level, clear__successful = True)))
+            .exclude(moves__isnull = True)
+            .order_by("moves")
+        )
+
+        levels = (
+            Level.objects.all()
+            .annotate(clears = Count("clear"))
+            .order_by("points", "moves", "configurations")
+            .filter(points__gte = level.points)
+        )
+
+        levels = itertools.chain(levels, itertools.cycle([None]))
+        levels = itertools.dropwhile(lambda x: x is not None and x.id != level.id, levels)
+        levels = itertools.islice(levels, 1, None)
+        next_level = next(levels)
+
+        return render(request, "puzzle/level.html", {"level": level, "times": times, "moves": moves, "next_level": next_level})
 
     if request.method == "POST":
         if not request.user.is_authenticated:

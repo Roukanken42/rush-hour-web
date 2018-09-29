@@ -22,7 +22,11 @@
         <div class="row">
             <h3 class="col"> {{ level.name }} </h3>
             <div class="col">
-                <a class="btn btn-outline-danger float-right mx-2" href="{% url 'level_list' %}"><i class="fas fa-backward"></i> Back</a>
+                {% if next_level %}
+                    <a class="btn btn-outline-success float-right mx-2 " href="{% url 'level' next_level.id %}"><i class="fas fa-forward"></i> Next level</a>
+                {% endif %}
+
+                <a class="btn btn-outline-danger float-right mx-2" href="{% url 'level_list' %}"><i class="fas fa-backward"></i> Level list</a>
                 <a class="btn btn-outline-secondary float-right mx-2" onclick="reset()"><i class="fas fa-undo-alt"></i> Restart</a>
             </div>
         </div>
@@ -32,15 +36,27 @@
             <div class="alert alert-danger"> You must be logged in to play!</div>
         {% endif %}
 
+        <div class="row" style="font-size: 30px">
+            <div class="col-md-6" style="text-align: center">
+                Minimum moves: {{ level.moves }}
+            </div>
+            <div class="col-md-6" style="text-align: center">
+               Configurations: {{ level.configurations }}
+            </div>
+        </div>
+
+        <br>
+        
         <div class="row justify-content-center">
             <canvas id="canvas" width="{{ level.width }}px" height="{{ level.height }}px" style="margin: auto"></canvas>
         </div>        
+        <br>
         <div class="row" style="font-size: 30px">
             <div class="col-md-6" style="text-align: center">
-                <i class="fas fa-arrows-alt" title="Moves"></i> - <span class="level-moves"></span> <br>
+                <i class="fas fa-arrows-alt" title="Moves"></i> - <span class="level-moves"></span>
             </div>
             <div class="col-md-6" style="text-align: center">
-                <i class="far fa-clock" title="Time"></i> - <span class="level-time minutes"></span>:<span class="level-time seconds"></span> <br>
+                <i class="far fa-clock" title="Time"></i> - <span class="level-time minutes"></span>:<span class="level-time seconds"></span>
             </div>
         </div>
     </div>
