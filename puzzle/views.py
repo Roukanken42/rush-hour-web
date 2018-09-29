@@ -80,9 +80,9 @@ def level(request, level_id):
             data = request.POST.get("data", "")
             dataJson = json.loads(data)
             
-            moves = sum(1 if move["min"] != move["max"] else 0 for move in dataJson)
+            moves = int(request.POST.get("moves"))
 
-            time = int(request.POST.get("time", "-1"))
+            time = int(request.POST.get("time"))
             time = datetime.timedelta(milliseconds=time)
 
             won = True if request.POST.get("won", "") == "true" else False

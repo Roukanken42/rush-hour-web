@@ -106,6 +106,37 @@ function reset(){
         }
     }
 
+    function snapCar(car){
+        let max = car.vertical ? GRID.height : GRID.width;
+        let points = [];
+
+        for(let i = 0; i < max; i++){
+            let point = new Point(SQUARE_WIDTH.multiply(i).add(SQUARE_HEIGHT.multiply(i)).add(BORDER_SIZE).add(GAP_SIZE));
+
+            if (car.vertical)
+                point.x = car.bounds.topLeft.x
+            else 
+                point.y = car.bounds.topLeft.y
+
+            point.pos = i;
+            points.push(point);
+        }
+
+        let minDistance = 99999999;
+        let minPoint = car.bounds.topLeft;
+
+        for (let point of points){
+            let distance = car.bounds.topLeft.subtract(point).length;
+
+            if (distance <= minDistance){
+                minDistance = distance;
+                minPoint = point;
+            }
+        }
+
+        return minPoint;
+    }
+
     function drawCar(gameId, x, y, w, h, color) {
         let corner = SQUARE_WIDTH.multiply(x).add(SQUARE_HEIGHT.multiply(y)).add(BORDER_SIZE).add(GAP_SIZE);
         let width = new Size(SQUARE_WIDTH.multiply(w).add(SQUARE_HEIGHT.multiply(h)).subtract(GAP_SIZE.multiply(2)));
@@ -129,9 +160,11 @@ function reset(){
 
             car.downTime = Date.now() - start
 
-            car.minDrag = undefined
-            car.maxDrag = undefined
+            let pos = snapCar(car).pos
 
+            car.minDrag = pos
+            car.maxDrag = pos
+            car.dragStartPos = pos
         }
 
         car.onMouseDrag = event => {
@@ -180,27 +213,10 @@ function reset(){
                 }
             }
 
-            let pos = 0;
+            let pos = snapCar(car).pos;
 
-            if (car.vertical){
-                pos = Math.round((car.bounds.topLeft.y - BORDER) / SQUARE.width)
-                // console.log((car.bounds.topLeft.y - BORDER) / SQUARE.width)
-            } else {
-                pos = Math.round((car.bounds.topLeft.x - BORDER) / SQUARE.height)
-                // console.log((car.bounds.topLeft.x - BORDER) / SQUARE.height)
-            }
-
-            if (car.minDrag != undefined) {
-                car.minDrag = Math.min(pos, car.minDrag)
-            } else {
-                car.minDrag = pos;
-            }
-
-            if (car.maxDrag != undefined) {
-                car.maxDrag = Math.max(pos, car.maxDrag)
-            } else {
-                car.maxDrag = pos;
-            }
+            car.minDrag = Math.min(pos, car.minDrag)
+            car.maxDrag = Math.max(pos, car.maxDrag)
 
             // console.log("Dragging:", car.minDrag, "-", car.maxDrag)
 
@@ -219,45 +235,11 @@ function reset(){
             if(!loggedIn || won) return 
             
             if (car.draged){
-                let points = [];
-
-                let max = car.vertical ? GRID.height : GRID.width;
-
-                for(let i = 0; i < max; i++){
-                    let point = new Point(SQUARE_WIDTH.multiply(i).add(SQUARE_HEIGHT.multiply(i)).add(BORDER_SIZE).add(GAP_SIZE));
-
-                    if (car.vertical)
-                        point.x = car.bounds.topLeft.x
-                    else 
-                        point.y = car.bounds.topLeft.y
-
-                    point.pos = i;
-                    points.push(point);
-                }
-
-                let minDistance = 99999999;
-                let minPoint = car.bounds.topLeft;
-
-                for (let point of points){
-                    let distance = car.bounds.topLeft.subtract(point).length;
-
-                    if (distance <= minDistance){
-                        minDistance = distance;
-                        minPoint = point;
-                    }
-                }
-
+                let minPoint = snapCar(car)
                 car.bounds.topLeft = minPoint;
                 
-                if (car.minDrag != car.maxDrag)
+                if (car.dragStartPos != minPoint.pos)
                     moves += 1;
-                
-                if (car.minDrag == undefined)
-                    car.minDrag = minPoint.pos 
-
-                if (car.maxDrag == undefined)
-                    car.maxDrag = minPoint.pos 
-
 
                 logData.push({car: car.gameId, start: car.downTime, end: Date.now() - start, pos: minPoint.pos, min: car.minDrag, max: car.maxDrag})
                 updateUI();
@@ -297,7 +279,7 @@ function reset(){
             type:"POST",
             url: window.location.href, 
             async: sync,
-            data: {"data": JSON.stringify(logData), "time": Date.now() - start, "won": won, "csrfmiddlewaretoken": csfr}
+            data: {"data": JSON.stringify(logData), "time": Date.now() - start, "won": won, "moves": moves, "csrfmiddlewaretoken": csfr}
         })
 
         uploaded = true;
