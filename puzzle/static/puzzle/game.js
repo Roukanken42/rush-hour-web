@@ -5,6 +5,7 @@ let canvas = document.getElementById("canvas")
 let moves = 0;
 
 $(document).ready(() => {
+    paper.setup(canvas)
     reset()
 })
 
@@ -15,7 +16,6 @@ function getproject(){
 }
 
 function reset(){
-    paper.setup(canvas)
     project.clear();
 
     if (timer != null)
