@@ -40,6 +40,7 @@
             <th class="center">Levels</th>
             {# <th>Points</th> #}
             <th class="center">Points</th>
+            <th style="width: 25%" class="center"></th>
         </tr>
     </thead>
     <tbody>
@@ -49,10 +50,13 @@
             <td class="center">{{ user.username }}</td>
             <td class="center">{{ user.levels }}</td>
             <td class="center">
-                <div class="progress">
-                    <div class="progress-bar bg-success" 
-                        role="progressbar" style="width: {% widthratio user.points users.0.points 100 %}%">{{ user.points|floatformat:2 }}</div>
-                </div>
+                <span>{{ user.points|floatformat:2 }}</span>
+            </td>
+            <td class="center">
+                <span class="progress">
+                    <span class="progress-bar bg-success" 
+                        role="progressbar" style="width: {% widthratio user.points users.0.points 100 %}%"></span>
+                </span>
             </td>
         </tr>
     {% endfor %}
